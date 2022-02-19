@@ -25,9 +25,6 @@ class EDA:
         self.acc_df.dropna(axis=0, subset=["revol_util"], inplace=True)
 
     def refined_clean_up(self):
-        # update int_rate, revol_util without % sign and as numeric type
-        #self.acc_df["int_rate"] = pd.to_numeric(self.acc_df["int_rate"].apply(lambda x:x.split('%')[0]))
-        #self.acc_df["revol_util"] = pd.to_numeric(self.acc_df["revol_util"].apply(lambda x:x.split('%')[0]))
         # remove text data from term feature and store as numerical
         self.acc_df["term"] = pd.to_numeric(self.acc_df["term"].apply(lambda x:x.split()[0]))
         # remove the rows with loan_status as "Current"
@@ -40,6 +37,7 @@ class EDA:
         self.acc_df["emp_length"] = pd.to_numeric(self.acc_df["emp_length"].apply(lambda x:0 if "<" in x else (x.split('+')[0] if "+" in x else x.split()[0])))
         # look through the purpose value counts
         loan_purpose_values = self.acc_df["purpose"].value_counts()*100/self.acc_df.shape[0]
+
         # for annual_inc, the highest value is 6000000 where 75% quantile value is 83000, and is 100 times the mean
         # we need to remomve outliers from annual_inc i.e. 99 to 100%
         annual_inc_q = self.acc_df["annual_inc"].quantile(0.99)
@@ -61,8 +59,6 @@ class EDA:
         loan_purpose_delete = loan_purpose_values[loan_purpose_values<1].index.values
         self.acc_df = self.acc_df[[False if p in loan_purpose_delete else True for p in self.acc_df["purpose"]]]
 
-        # self.acc_df['issue_d'] = self.acc_df['issue_d'].apply(lambda x:self._standerdisedate(x))
-        # self.acc_df['issue_d'] = self.acc_df['issue_d'].apply(lambda x: datetime.strptime(x, '%b-%y'))
         # extracting month and year from issue_date
         self.acc_df['month'] = self.acc_df['issue_d'].apply(lambda x: x.split('-')[0])
         self.acc_df['year'] = self.acc_df['issue_d'].apply(lambda x: x.split('-')[1])
@@ -81,8 +77,8 @@ class EDA:
         bins = [0, 25000, 50000, 75000, 100000, 1000000]
         bucket_l = ['0-25000', '25000-50000', '50000-75000', '75000-100000', '100000+']
         self.acc_df['annual_inc_range'] = pd.cut(self.acc_df['annual_inc'], bins, labels=bucket_l)
-        # create bins for installment range
 
+        # create bins for installment range
         self.acc_df['installment'] = self.acc_df['installment'].apply(lambda x: self._installment(x))
         # create bins for dti range
         bins = [-1, 5.00, 10.00, 15.00, 20.00, 25.00, 50.00]
